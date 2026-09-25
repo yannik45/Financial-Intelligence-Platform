@@ -47,6 +47,12 @@ The named `financial_ai_runtime` volume mounts at `/app/data/runtime` and holds:
 - generated training snapshots and the active model;
 - feedback exports, candidates, reports, archives, and promotion receipts.
 
+The fresh container does not need the market XGBoost artifact to serve the demo.
+The forecast panel uses its labeled close-price EWMA reference on synthetic
+prices. A separately built, checksum-verified XGBoost artifact can be placed in
+the runtime volume for external instruments; the historical training data is
+not redistributed in the Docker image.
+
 ```powershell
 docker compose up --build --wait
 docker compose logs --follow
@@ -68,7 +74,7 @@ The independent `Containers` CI job:
 
 1. validates the Compose configuration and builds both images;
 2. starts the stack and waits for health checks;
-3. probes FastAPI, Nginx, and FastAPI through the Nginx proxy;
+3. probes FastAPI, Nginx, the proxy, and a demo forecast through the proxy;
 4. prints logs on failure and always removes temporary CI resources.
 
 This verifies the complete browser-facing route, not merely two isolated

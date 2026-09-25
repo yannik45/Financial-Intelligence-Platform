@@ -120,7 +120,7 @@ def test_forecast_service_refreshes_full_window_when_cache_is_stale(monkeypatch)
 
     result = service.forecast("instrument-1")
 
-    assert result.data_status == "current"
+    assert result.data_status == "stale"
     assert result.training_source_feed == "sip"
     assert result.feed_match is False
     assert [call["refresh"] for call in market_data.calls] == [False, True]
@@ -143,6 +143,22 @@ def test_forecast_service_marks_cached_data_stale_when_refresh_fails(monkeypatch
 
     assert result.data_status == "stale"
     assert result.forecast.predicted_annualized_volatility == pytest.approx(0.237)
+
+
+def test_forecast_service_uses_ewma_without_deployment_artifact():
+    market_data = RecordingMarketData(stale=False)
+    service = MarketForecastService(
+        market_data,
+        loaded_model=None,
+        clock=lambda: datetime(2026, 8, 10, 19, 0, tzinfo=UTC),
+    )
+
+    result = service.forecast("instrument-1")
+
+    assert result.forecast.model_version == "ewma-close-0.94-v1"
+    assert result.forecast.predicted_annualized_volatility > 0
+    assert result.training_source_feed is None
+    assert result.feed_match is None
 
 
 def test_forecast_service_does_not_hide_provider_failure_without_cache():
@@ -213,7 +229,7 @@ def test_volatility_forecast_endpoint_reports_provider_failure(client):
     assert response.json()["detail"]["code"] == "market_forecast_data_unavailable"
 
 
-def test_volatility_forecast_endpoint_reports_missing_model(client, monkeypatch):
+def test_fresh_demo_forecast_works_without_trained_model(client, monkeypatch):
     def unavailable_model():
         raise MarketForecastArtifactError("Run the model build command first")
 
@@ -228,8 +244,13 @@ def test_volatility_forecast_endpoint_reports_missing_model(client, monkeypatch)
 
     response = client.get(f"/v1/market/instruments/{instrument_id}/volatility-forecast")
 
-    assert response.status_code == 503
-    assert response.json()["detail"]["code"] == "market_forecast_model_unavailable"
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["model_version"] == "ewma-close-0.94-v1"
+    assert payload["predicted_annualized_volatility"] > 0
+    assert payload["training_source_feed"] is None
+    assert payload["feed_match"] is None
+    assert payload["source"] == "demo"
 
 
 def test_volatility_forecast_endpoint_reports_unknown_instrument(client):

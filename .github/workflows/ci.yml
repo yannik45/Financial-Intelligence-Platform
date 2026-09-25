@@ -100,6 +100,19 @@ jobs:
           curl --fail --show-error http://localhost:8000/health
           curl --fail --show-error http://localhost:5173/health
           curl --fail --show-error http://localhost:5173/api/health
+          python3 - <<'PY'
+          import json
+          from urllib.request import urlopen
+
+          base = "http://localhost:5173/api/v1/market"
+          with urlopen(f"{base}/instruments?query=world") as response:
+              instrument_id = json.load(response)[0]["id"]
+          with urlopen(f"{base}/instruments/{instrument_id}/volatility-forecast") as response:
+              forecast = json.load(response)
+          assert forecast["model_version"] == "ewma-close-0.94-v1", forecast
+          assert forecast["predicted_annualized_volatility"] > 0, forecast
+          assert forecast["training_source_feed"] is None, forecast
+          PY
 
       - name: Show container logs on failure
         if: failure()

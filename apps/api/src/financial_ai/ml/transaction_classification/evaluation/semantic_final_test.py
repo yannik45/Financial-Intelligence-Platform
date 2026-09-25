@@ -1,4 +1,3 @@
-import hashlib
 import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -8,6 +7,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
 
+from financial_ai.ml.artifact_integrity import calculate_canonical_text_sha256
 from financial_ai.ml.transaction_classification.data.classification_v2_dataset import (
     ClassificationV2Dataset,
     load_classification_v2_dataset,
@@ -55,7 +55,7 @@ class ManualTestReport:
 
 
 def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    return calculate_canonical_text_sha256(path)
 
 
 def evaluate_manual_test_predictions(

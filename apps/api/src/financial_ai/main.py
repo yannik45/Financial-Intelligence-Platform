@@ -227,19 +227,28 @@ def get_market_forecast_service(
         market_data = market_service_for_instrument(session, instrument_id)
     except InstrumentNotFoundError as exc:
         raise market_error(exc) from exc
-    try:
-        loaded_model = get_loaded_market_forecast_model()
-    except MarketForecastArtifactError as exc:
-        raise HTTPException(
-            status_code=503,
-            detail={
-                "code": "market_forecast_model_unavailable",
-                "message": str(exc),
-            },
-        ) from exc
+    instrument = session.get(MarketInstrument, instrument_id)
+    assert instrument is not None
+    loaded_model = None
+    if instrument.provider != "demo":
+        settings = get_settings()
+        artifact = settings.market_forecast_model_artifact_path
+        metadata = settings.market_forecast_model_metadata_path
+        if artifact.exists() or metadata.exists():
+            try:
+                loaded_model = get_loaded_market_forecast_model()
+            except MarketForecastArtifactError as exc:
+                raise HTTPException(
+                    status_code=503,
+                    detail={
+                        "code": "market_forecast_model_unavailable",
+                        "message": str(exc),
+                    },
+                ) from exc
     return MarketForecastService(
         market_data,
         loaded_model,
+        demo_mode=instrument.provider == "demo",
     )
 
 

@@ -1,22 +1,16 @@
-# Transaction categorization dataset
+# Optional source for the early categorization baseline
 
-The transaction categorization baseline uses the synthetic
+The early classifier experiment used the synthetic
 [`DoDataThings/us-bank-transaction-categories-v2`](https://huggingface.co/datasets/DoDataThings/us-bank-transaction-categories-v2)
-dataset.
+dataset. It is not customer data and is not required to run the application or
+the current frozen evaluations.
 
-The raw CSV is not committed. Download the pinned and checksum-verified version
-to the ignored `data/runtime` directory from the repository root:
+The raw CSV is not committed. To download the pinned, checksum-verified copy
+into ignored `data/runtime/`, run from the repository root:
 
 ```powershell
-.\.venv\Scripts\python.exe -m financial_ai.ml.category_dataset
+uv run python -m financial_ai.ml.category_dataset
 ```
 
-Expected local path:
-
-```text
-data/runtime/ml/transaction_categories/transactions-synthetic.csv
-```
-
-The source data is synthetic and modeled after US bank-statement descriptions.
-It must not be presented as real customer transaction data. See `metadata.json`
-for provenance and integrity information.
+The destination is `data/runtime/ml/transaction_categories/transactions-synthetic.csv`.
+See `metadata.json` in this directory for source and integrity details.

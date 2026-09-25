@@ -1,185 +1,117 @@
 # Financial Intelligence Platform
 
-A full-stack portfolio intelligence platform that connects portfolio trading,
-account cash flows, deterministic risk analytics, external market data, and
-applied machine learning in one auditable system.
+A local-first portfolio application that connects simulated trading, account
+cash flows, risk analytics, market data, and explainable ML suggestions. Its
+core design rule is simple: the backend owns financial calculations and ledger
+state; the browser presents results and collects review decisions.
 
-![Portfolio summary, key metrics, and value history](docs/assets/portfolio-overview.png)
+![Portfolio dashboard with valuation, risk metrics, and allocation charts](docs/assets/portfolio-overview.png)
 
-*Portfolio overview with valuation, risk metrics, reconstructed value history, and allocation breakdowns.*
+## What you can explore
 
-## At a glance
-
-| Aspect | Summary |
+| Area | Implemented behavior |
 |---|---|
-| Product | Portfolio dashboard with linked brokerage accounts, simulated trading, transaction intelligence, risk analytics, and reproducible ML workflows |
-| Problem | Financial data, portfolio state, and ML predictions are often handled in disconnected prototypes; this project keeps them consistent behind tested backend contracts |
-| Engineering focus | Deterministic financial calculations, traceable data provenance, leakage-aware evaluation, human review, versioned artifacts, and containerized delivery |
-| Current ML | Bilingual transaction classification and leakage-aware 20-day volatility forecasting with statistical, Ridge, and XGBoost models |
+| Portfolio workspace | Create or import a portfolio, inspect holdings, allocation, valuation history, and separate market-risk, diversification, and liquidity indicators |
+| Simulated trading | Search instruments, place buy/sell orders using backend prices, and see cash, holdings, and P&L update from one signed ledger |
+| Transaction intelligence | Explore checking, savings, and linked brokerage activity; generate a reproducible synthetic bank feed; edit classification suggestions |
+| Market data and forecasts | Use credential-free demo prices or optional Alpaca daily data; inspect source and freshness; view a clearly labeled volatility estimate |
 
-## Technology stack
+![Instrument discovery and simulated order workflow](docs/assets/trading-and-forecast.png)
 
-| Layer | Technologies |
-|---|---|
-| Frontend | React, TypeScript, Vite, TanStack Query, Recharts |
-| Backend | Python 3.12, FastAPI, Pydantic, SQLAlchemy 2, Alembic |
-| Data and ML | SQLite, pandas, NumPy, scikit-learn, XGBoost, versioned local artifacts |
-| Delivery | uv, npm, pytest, Ruff, GitHub Actions, Docker Compose, unprivileged Nginx |
+The application is an engineering and applied-ML case study. Orders never reach
+a broker, and the demo needs no credentials or real customer data.
 
-## What is implemented
+## Run the demo
 
-| Area | Current capability |
-|---|---|
-| Portfolio analytics | Ledger-derived holdings, valuation, allocation, P&L, return, volatility, drawdown, separate market-risk, diversification, and liquidity indicators, and time series |
-| Market data | Provider-neutral instrument search and cached daily history with source and freshness metadata; deterministic demo mode and optional Alpaca adapter |
-| Portfolio trading | Buy/sell simulation inside the selected portfolio with server pricing, derived holdings, and realized/unrealized P&L |
-| Transaction ledger | Checking, savings, and portfolio-linked brokerage accounts; signed cash flows, filters, manual entry, and reproducible synthetic bank-feed scenarios |
-| Classification | Experimental editable English/German suggestions using rules, character TF-IDF, and multilingual E5 with selective auto-acceptance |
-| Market forecasting | Versioned historical OHLCV data, purged temporal evaluation, final-tested XGBoost, checksum-verified deployment artifact, and instrument-level forecasts in the trading workflow |
-| ML lifecycle | Frozen evaluation sets, abstention metrics, feedback capture, immutable exports, candidate gates, explicit promotion, and rollback artifacts |
-| Delivery | Backend/frontend tests, GitHub Actions, multi-stage images, health checks, reverse proxy, and persistent Compose storage |
-
-## Product walkthrough
-
-### Instrument research and trading
-
-![Instrument discovery, volatility forecast, and simulated order workflow](docs/assets/trading-and-forecast.png)
-
-*Instrument discovery combines current market data, volatility forecasts, and simulated orders.*
-
-### Portfolio risk analytics
-
-![Portfolio risk score, dimensions, and principal risk drivers](docs/assets/risk-analytics.png)
-
-*Deterministic risk analytics separate measured market risk, diversification, and liquidity.*
-
-### Transaction intelligence
-
-![Unified account activity and transaction classification review](docs/assets/transaction-classification.png)
-
-*Unified account activity with editable ML category suggestions and review status.*
-
-Financial metrics are calculated only by deterministic backend code. A future
-LLM may select tested tools and explain their output, but must never calculate
-financial metrics itself. RAG and LLM integration are not implemented yet.
-
-## Architecture
-
-```text
-Browser -> React / Nginx -> FastAPI -> SQLite + cached market data
-                              |----> deterministic portfolio analytics
-                              `----> rules + lexical/semantic classifiers
-
-Offline ML commands -> versioned snapshots -> features -> evaluation reports
-```
-
-See the [system overview](docs/architecture/system-overview.md) for component
-boundaries and data flows. Container details are in the
-[container architecture](docs/architecture/containerization.md). The
-[portfolio risk-score method](docs/architecture/portfolio-risk-score.md)
-documents inputs, weights, thresholds, and interpretation limits.
-
-## Quick start with Docker
-
-Requires Docker with Compose:
+With Docker and Compose installed, from the repository root:
 
 ```powershell
 docker compose up --build --wait
 ```
 
-- Dashboard: `http://localhost:5173`
-- API health: `http://localhost:8000/health`
-- OpenAPI documentation: `http://localhost:8000/docs`
+Open the dashboard at **http://localhost:5173**. The API health endpoint is at
+**http://localhost:8000/health**, and its OpenAPI page is at
+**http://localhost:8000/docs**. Select a demo portfolio, open the trading panel,
+and inspect activity or a forecast. `docker compose down` stops the stack while
+retaining its SQLite database and generated model artifacts in a named volume.
 
-Stop the stack without deleting its database or model artifacts:
+The demo forecast uses an EWMA reference on synthetic closing prices. The
+historical XGBoost experiment is separate: its licensed training snapshot and
+model artifact are not bundled. The fixed demo price snapshot ends on
+2026-06-30, so later estimates are shown as historical and marked stale.
 
-```powershell
-docker compose down
+Optional external daily bars require backend-only Alpaca credentials in a local
+`.env` (see [.env.example](.env.example)). External orders are still simulated.
+
+## How it is built
+
+```text
+React / Vite -> Nginx /api proxy -> FastAPI -> SQLite ledger and cached prices
+                                           |-> deterministic analytics
+                                           |-> classification and forecast services
+
+Offline commands -> versioned data -> evaluation -> verified model artifacts
 ```
 
-`docker compose down --volumes` also permanently removes the
-container-managed runtime data.
+The frontend uses React, TypeScript, TanStack Query, and Recharts. The backend
+uses Python 3.12, FastAPI, SQLAlchemy, Alembic, pandas, scikit-learn, and
+XGBoost. `uv.lock` and `package-lock.json` pin the environments. Docker Compose
+runs unprivileged API and web containers with persistent runtime storage.
 
-## Local development
+Every portfolio links to one brokerage account. A simulated order writes a
+regular signed security transaction; holdings, cash, and analytics are derived
+from that shared record. Market observations carry source and freshness metadata.
+The UI does not calculate financial metrics or supply execution prices.
 
-Requires Python 3.12, [uv](https://docs.astral.sh/uv/), Node.js 22+, and npm.
-From the repository root:
+## ML evidence
+
+The transaction classifier combines direction-aware rules, character TF-IDF,
+and a multilingual semantic model. A frozen 252-case synthetic product challenge
+for the earlier rules-plus-lexical policy reproduced **69.8% overall accuracy**;
+it auto-accepted **60.7%** of cases at **96.1% accuracy among accepted cases**.
+The current semantic manual test reproduced **95.5%** on only **44 curated
+in-scope descriptions**. These are development results, not real-bank accuracy.
+
+The volatility study compared EWMA, Ridge, and XGBoost on a historical US-equity
+sample using chronological splits and a 20-trading-day purge. Its committed
+final-test record reports XGBoost mean absolute error of **0.0690**, versus
+**0.0699** for Ridge. The raw SIP snapshot is not committed, so that historical
+test cannot be rerun from a fresh checkout. The Docker demo uses the separate
+EWMA reference.
+
+Start with the [ML overview](docs/ml/README.md) for serving behavior, evaluation
+limits, and reproduction status.
+
+## Develop and verify
+
+Requires Python 3.12, [uv](https://docs.astral.sh/uv/), Node.js 22+, and npm:
 
 ```powershell
-uv sync --all-groups --extra semantic
-uv run alembic upgrade head
-uv run financial-ai-bootstrap-category-model
-uv run financial-ai-api
+uv sync --locked --all-groups --extra semantic
+uv run --extra semantic alembic upgrade head
+uv run --extra semantic financial-ai-bootstrap-category-model
+uv run --extra semantic financial-ai-api
 ```
 
-In a second terminal:
+In another terminal:
 
 ```powershell
 cd apps/web
-npm.cmd install
+npm.cmd ci
 npm.cmd run dev
 ```
 
-If `uv` is not available but the synchronized `.venv` already exists:
+Run backend tests with `uv run pytest` and frontend checks with `npm.cmd test`
+and `npm.cmd run build` from `apps/web`. CI also builds the containers and
+smoke-tests a demo forecast through the browser-facing proxy.
 
-```powershell
-.\.venv\Scripts\python.exe -m alembic upgrade head
-.\.venv\Scripts\python.exe -m financial_ai.ml.transaction_classification.modeling.category_bootstrap
-.\.venv\Scripts\python.exe -m uvicorn financial_ai.main:app --host 127.0.0.1 --port 8000 --reload
-```
+The app has no authentication and targets a single-instance demo. Before using
+real customer data or deploying it as a financial product, it would need
+identity and access control, provider licensing, privacy and security review,
+monitoring, durable storage, and independent model validation. Nothing here is
+financial advice.
 
-This fallback cannot install or update dependencies. Copy `.env.example` to
-`.env` for backend overrides and `apps/web/.env.example` to `apps/web/.env` for
-frontend overrides. Do not commit secrets.
-
-Demo portfolios require no credentials. Optional Alpaca search and daily bars
-require `FINANCIAL_AI_ALPACA_API_KEY` and `FINANCIAL_AI_ALPACA_SECRET_KEY` in a
-local `.env`; credentials are passed only to the backend. Orders remain
-simulated, and reviewers without credentials can use every demo workflow.
-
-Each portfolio owns one brokerage account. Buys, sales, cash, holdings, cost
-basis, P&L, and the integrated activity view share the same signed ledger. See
-the [system overview](docs/architecture/system-overview.md) for pricing,
-persistence, and trust boundaries.
-
-## Data and intended use
-
-The application is built as a production-oriented engineering and applied-ML
-case study. Portfolio orders are simulated and no real brokerage trades are
-placed. Demo portfolios, ledger activity, and transaction-classification
-training data are synthetic; external portfolio prices can optionally come from
-Alpaca, the volatility experiment uses a versioned historical Alpaca SIP
-snapshot, and currency conversion uses a stored ECB reference snapshot.
-
-These boundaries keep the repository reproducible while making the provenance
-of real and generated observations explicit. Production use with customer data
-would additionally require provider licensing, security and privacy reviews,
-operational monitoring, and independent model validation. Nothing in this
-repository is financial advice.
-
-## Verification
-
-```powershell
-uv run pytest
-cd apps/web
-npm.cmd test
-npm.cmd run build
-```
-
-CI runs backend lint/tests, frontend tests/build, image builds, health checks,
-and an end-to-end proxy smoke test. Generated content in `.venv`,
-`node_modules`, `dist`, and `data/runtime` is ignored.
-
-## Documentation
-
-- [System overview](docs/architecture/system-overview.md): architecture,
-  responsibilities, data flows, and current boundaries.
-- [Container architecture](docs/architecture/containerization.md): images,
-  networking, persistence, and CI checks.
-- [ML documentation index](docs/ml/README.md): active contracts and frozen
-  experiment records.
-- [Data notes](data/README.md): synthetic data boundaries and ECB provenance.
-
-The volatility model has completed its frozen 2024–2025 final test and is
-integrated through a checksum-verified native XGBoost artifact. Broader risk
-modeling and an assistant with deterministic tool calling remain later increments.
+For more detail, see the [system overview](docs/architecture/system-overview.md),
+[container setup](docs/architecture/containerization.md),
+[risk-indicator method](docs/architecture/portfolio-risk-score.md), and
+[data provenance notes](data/README.md).

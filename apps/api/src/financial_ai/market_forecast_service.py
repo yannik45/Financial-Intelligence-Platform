@@ -14,6 +14,7 @@ from financial_ai.market_data_service import (
 )
 from financial_ai.ml.market_forecast.modeling.inference import (
     MarketVolatilityForecast,
+    forecast_ewma_volatility,
     forecast_volatility,
 )
 from financial_ai.ml.market_forecast.modeling.model_artifact import (
@@ -34,7 +35,7 @@ class CurrentMarketVolatilityForecast:
     source: str
     retrieved_at: datetime
     data_status: str
-    training_source_feed: str
+    training_source_feed: str | None
     feed_match: bool | None
 
 
@@ -58,17 +59,21 @@ class MarketForecastService:
     def __init__(
         self,
         market_data: MarketDataService,
-        loaded_model: LoadedMarketForecastModel,
+        loaded_model: LoadedMarketForecastModel | None,
         clock: Callable[[], datetime] | None = None,
+        demo_mode: bool = False,
     ) -> None:
         self._market_data = market_data
         self._loaded_model = loaded_model
         self._clock = clock or (lambda: datetime.now(UTC))
+        self._demo_mode = demo_mode
 
     def forecast(self, instrument_id: str) -> CurrentMarketVolatilityForecast:
         now = self._clock()
         completed_through = last_completed_us_market_date(now)
         date_from = completed_through - timedelta(days=FORECAST_HISTORY_CALENDAR_DAYS)
+        if self._demo_mode:
+            date_from = None
         history = self._market_data.history(
             instrument_id,
             date_from=date_from,
@@ -76,7 +81,7 @@ class MarketForecastService:
         )
         latest_observation = history.points[-1].observed_on
         needs_refresh = self._market_data.is_stale(history.retrieved_at) or (
-            latest_observation < completed_through
+            latest_observation < completed_through and not self._demo_mode
         )
         data_status = "current"
         if needs_refresh:
@@ -90,17 +95,25 @@ class MarketForecastService:
             except (InstrumentNotFoundError, MarketDataProviderError):
                 data_status = "stale"
 
-        result = forecast_volatility(history, self._loaded_model)
+        if history.points[-1].observed_on < completed_through:
+            data_status = "stale"
+        if self._loaded_model is None:
+            result = forecast_ewma_volatility(history)
+            training_feed = None
+        else:
+            result = forecast_volatility(history, self._loaded_model)
+            training_feed = self._loaded_model.metadata.training_source_feed
         source_parts = history.source.split(":", maxsplit=1)
         inference_feed = source_parts[1] if len(source_parts) == 2 else None
-        training_feed = self._loaded_model.metadata.training_source_feed
         return CurrentMarketVolatilityForecast(
             forecast=result,
             source=history.source,
             retrieved_at=history.retrieved_at,
             data_status=data_status,
             training_source_feed=training_feed,
-            feed_match=inference_feed == training_feed if inference_feed else None,
+            feed_match=(
+                inference_feed == training_feed if inference_feed and training_feed else None
+            ),
         )
 
 

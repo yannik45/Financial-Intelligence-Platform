@@ -85,9 +85,7 @@ export default function PortfolioTradingPanel({ portfolioId }: { portfolioId: st
   const prepareHoldingOrder = (holding: PortfolioHolding, orderSide: "buy" | "sell") => {
     setShowTrade(true);
     setInstrument(holding.instrument);
-    if (overview.data?.market_data_mode === "external") {
-      setForecastInstrument(holding.instrument);
-    }
+    setForecastInstrument(holding.instrument);
     setSide(orderSide);
     setQuantity(orderSide === "buy" ? "1" : holding.quantity);
     setSearchText(holding.instrument.symbol);
@@ -98,9 +96,7 @@ export default function PortfolioTradingPanel({ portfolioId }: { portfolioId: st
   };
   const selectInstrument = (selected: MarketInstrument | null) => {
     setInstrument(selected);
-    setForecastInstrument(
-      overview.data?.market_data_mode === "external" ? selected : null,
-    );
+    setForecastInstrument(selected);
     if (
       selected &&
       !overview.data?.holdings.some((holding) => holding.instrument.id === selected.id)
@@ -272,7 +268,7 @@ export default function PortfolioTradingPanel({ portfolioId }: { portfolioId: st
           </form>
         ) : null}
         {executeOrder.isError ? <div className="error">{executeOrder.error.message}</div> : null}
-        {forecastInstrument && portfolio.market_data_mode === "external" ? (
+        {forecastInstrument ? (
         <InstrumentForecast
           instrumentId={forecastInstrument.id}
           symbol={forecastInstrument.symbol}
@@ -286,7 +282,7 @@ export default function PortfolioTradingPanel({ portfolioId }: { portfolioId: st
       <HoldingsTable
         holdings={portfolio.holdings}
         currency={portfolio.base_currency}
-        canForecast={portfolio.market_data_mode === "external"}
+        canForecast
         onForecast={openForecast}
         onOrder={prepareHoldingOrder}
       />

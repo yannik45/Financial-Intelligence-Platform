@@ -22,6 +22,14 @@ def test_manual_short_dataset_has_balanced_locked_splits() -> None:
     assert calculate_manual_short_sha256() == EXPECTED_SHA256
 
 
+def test_manual_short_checksum_is_independent_of_checkout_line_endings(tmp_path) -> None:
+    source = tmp_path / "manual_short.csv"
+    source.write_bytes(b"text,category\nMiete,housing\n")
+    expected = calculate_manual_short_sha256(source)
+    source.write_bytes(b"text,category\r\nMiete,housing\r\n")
+    assert calculate_manual_short_sha256(source) == expected
+
+
 def test_manual_short_dataset_rejects_phrase_and_novel_concept_leakage() -> None:
     data = load_manual_short_dataset()
     phrase_leakage = data.copy()
