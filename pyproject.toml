@@ -1,7 +1,7 @@
 [project]
 name = "financial-intelligence-platform"
 version = "0.1.0"
-description = "Local-first financial portfolio intelligence platform"
+description = "Portfolio intelligence platform with simulated trading and applied ML"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [

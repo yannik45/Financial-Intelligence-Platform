@@ -3,6 +3,9 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+from financial_ai.ml.transaction_classification.core.category_service import (
+    TransactionClassifier,
+)
 from financial_ai.ml.transaction_classification.evaluation.text_classification_evaluation import (
     ABSTENTION_LABEL,
     evaluate_text_classification_strategies,
@@ -69,7 +72,11 @@ def _small_challenge() -> pd.DataFrame:
     ).assign(counterparty="")
 
 
-def test_evaluation_compares_all_strategies_and_slices(loaded_category_model):
+def test_evaluation_compares_all_strategies_and_slices(loaded_category_model, monkeypatch):
+    def unexpected_semantic_load(self):
+        raise AssertionError("The frozen lexical evaluation must not load E5")
+
+    monkeypatch.setattr(TransactionClassifier, "_get_semantic_model", unexpected_semantic_load)
     evaluations = evaluate_text_classification_strategies(
         _small_challenge(), loaded_category_model, review_threshold=0.01
     )

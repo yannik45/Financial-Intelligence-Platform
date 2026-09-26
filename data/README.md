@@ -1,4 +1,4 @@
-# Demo data
+# Data provenance
 
 Security price series are generated at runtime with fixed random seeds. They are
 synthetic and must not be interpreted as actual market observations.

@@ -39,10 +39,13 @@ def test_bootstrap_generates_training_sources_before_model(monkeypatch, tmp_path
     class SemanticMetadata:
         training_rows = 16_500
 
+    class LoadedSemanticHead:
+        metadata = SemanticMetadata()
+
     monkeypatch.setattr(
         category_bootstrap,
         "load_semantic_head_artifact",
-        lambda: SemanticMetadata(),
+        lambda: LoadedSemanticHead(),
     )
 
     category_bootstrap.bootstrap_category_model()

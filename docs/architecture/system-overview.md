@@ -1,8 +1,9 @@
 # System overview
 
-The project is a local-first, single-instance portfolio demo. Financial state
-and calculations belong to FastAPI services; React displays their results and
-submits user choices. No broker orders are placed.
+The platform brings portfolio accounting, simulated trading, market data,
+analytics, and ML-backed suggestions together. FastAPI owns financial state
+and calculations; React displays results and submits user choices. Orders are
+simulated and never sent to a broker.
 
 ```text
 Browser -> React / Nginx -> FastAPI -> SQLite ledger + cached market data
@@ -75,7 +76,7 @@ volume preserves SQLite and generated artifacts. CI tests both applications,
 builds the images, and probes health and a demo forecast through the proxy.
 See the [container setup](containerization.md) for operational details.
 
-There is no authentication or real customer-data workflow. SQLite and the
-shared volume target one instance. Production use would need access control,
-licensed data, privacy and security controls, durable external storage,
-monitoring, and independent model validation.
+The SQLite database and shared volume support one instance. Authentication and
+a real customer-data workflow are not implemented. Deployment with customer
+data would require access control, licensed data, privacy and security controls,
+durable external storage, monitoring, and independent model validation.

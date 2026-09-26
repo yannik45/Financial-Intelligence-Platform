@@ -1,9 +1,9 @@
 # Financial Intelligence Platform
 
-A local-first portfolio application that connects simulated trading, account
-cash flows, risk analytics, market data, and explainable ML suggestions. Its
-core design rule is simple: the backend owns financial calculations and ledger
-state; the browser presents results and collects review decisions.
+A portfolio management platform that brings simulated trading, account cash
+flows, risk analytics, market data, and explainable ML suggestions into one
+workspace. The backend owns financial calculations and ledger state; the
+browser presents results and collects review decisions.
 
 ![Portfolio dashboard with valuation, risk metrics, and allocation charts](docs/assets/portfolio-overview.png)
 
@@ -18,10 +18,10 @@ state; the browser presents results and collects review decisions.
 
 ![Instrument discovery and simulated order workflow](docs/assets/trading-and-forecast.png)
 
-The application is an engineering and applied-ML case study. Orders never reach
-a broker, and the demo needs no credentials or real customer data.
+Orders are simulated and never reach a broker. The included sample data makes
+the application usable without market-data credentials or customer data.
 
-## Run the demo
+## Run the application
 
 With Docker and Compose installed, from the repository root:
 
@@ -35,10 +35,10 @@ Open the dashboard at **http://localhost:5173**. The API health endpoint is at
 and inspect activity or a forecast. `docker compose down` stops the stack while
 retaining its SQLite database and generated model artifacts in a named volume.
 
-The demo forecast uses an EWMA reference on synthetic closing prices. The
-historical XGBoost experiment is separate: its licensed training snapshot and
-model artifact are not bundled. The fixed demo price snapshot ends on
-2026-06-30, so later estimates are shown as historical and marked stale.
+The included synthetic price series supports a labeled EWMA volatility
+estimate. The XGBoost model from the historical study can be installed
+separately for external instruments. The fixed sample prices end on
+2026-06-30; later estimates are marked stale.
 
 Optional external daily bars require backend-only Alpaca credentials in a local
 `.env` (see [.env.example](.env.example)). External orders are still simulated.
@@ -67,20 +67,21 @@ The UI does not calculate financial metrics or supply execution prices.
 
 The transaction classifier combines direction-aware rules, character TF-IDF,
 and a multilingual semantic model. A frozen 252-case synthetic product challenge
-for the earlier rules-plus-lexical policy reproduced **69.8% overall accuracy**;
+for the earlier rules-plus-lexical policy reached **69.8% overall accuracy**;
 it auto-accepted **60.7%** of cases at **96.1% accuracy among accepted cases**.
-The current semantic manual test reproduced **95.5%** on only **44 curated
-in-scope descriptions**. These are development results, not real-bank accuracy.
+The semantic model reached **95.5% accuracy** on a separate set of **44
+curated in-scope descriptions**. These evaluations use synthetic or curated
+data; they do not measure accuracy on real bank transactions.
 
 The volatility study compared EWMA, Ridge, and XGBoost on a historical US-equity
 sample using chronological splits and a 20-trading-day purge. Its committed
 final-test record reports XGBoost mean absolute error of **0.0690**, versus
-**0.0699** for Ridge. The raw SIP snapshot is not committed, so that historical
-test cannot be rerun from a fresh checkout. The Docker demo uses the separate
-EWMA reference.
+**0.0699** for Ridge. The licensed SIP snapshot needed to calculate those
+figures is not included. The included price series uses
+the separate EWMA estimate.
 
-Start with the [ML overview](docs/ml/README.md) for serving behavior, evaluation
-limits, and reproduction status.
+Start with the [ML overview](docs/ml/README.md) for serving behavior,
+evaluation results, and data sources.
 
 ## Develop and verify
 
@@ -105,11 +106,11 @@ Run backend tests with `uv run pytest` and frontend checks with `npm.cmd test`
 and `npm.cmd run build` from `apps/web`. CI also builds the containers and
 smoke-tests a demo forecast through the browser-facing proxy.
 
-The app has no authentication and targets a single-instance demo. Before using
-real customer data or deploying it as a financial product, it would need
-identity and access control, provider licensing, privacy and security review,
-monitoring, durable storage, and independent model validation. Nothing here is
-financial advice.
+The current deployment uses SQLite and has no authentication, so it is intended
+for a single instance with sample data. Handling real customer data or live
+trading would require access control, licensed data, security and privacy
+controls, and independent model validation. Forecasts are informational and do
+not place orders.
 
 For more detail, see the [system overview](docs/architecture/system-overview.md),
 [container setup](docs/architecture/containerization.md),

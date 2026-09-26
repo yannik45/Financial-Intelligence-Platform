@@ -47,10 +47,10 @@ The named `financial_ai_runtime` volume mounts at `/app/data/runtime` and holds:
 - generated training snapshots and the active model;
 - feedback exports, candidates, reports, archives, and promotion receipts.
 
-The fresh container does not need the market XGBoost artifact to serve the demo.
-The forecast panel uses its labeled close-price EWMA reference on synthetic
-prices. A separately built, checksum-verified XGBoost artifact can be placed in
-the runtime volume for external instruments; the historical training data is
+The container serves a labeled close-price EWMA estimate on synthetic prices
+without the market XGBoost artifact. A separately built, checksum-verified
+XGBoost artifact can be placed in the runtime volume for external instruments;
+the historical training data is
 not redistributed in the Docker image.
 
 ```powershell
@@ -82,8 +82,7 @@ processes.
 
 ## Boundaries
 
-The stack is a reproducible local/deployment baseline. SQLite and a shared
-runtime volume are appropriate for the single-instance demo. A production
-system still needs an external database, separate durable model/feedback
-storage, authentication, TLS, secrets management, image publication,
+The stack is a reproducible single-instance deployment. Wider deployment
+would need an external database, separate durable model/feedback storage,
+authentication, TLS, secrets management, image publication,
 vulnerability scanning, monitoring, and cloud orchestration.

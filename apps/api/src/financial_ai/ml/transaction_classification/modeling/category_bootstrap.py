@@ -38,17 +38,18 @@ def bootstrap_category_model() -> None:
         )
     print(f"Category model ready: {DEFAULT_ARTIFACT_PATH} ({metadata.training_rows} training rows)")
     try:
-        semantic = load_semantic_head_artifact()
+        semantic_metadata = load_semantic_head_artifact().metadata
     except SemanticArtifactError:
         try:
             encoder = load_sentence_encoder()
-            semantic = build_semantic_head_artifact(encoder)
+            semantic_metadata = build_semantic_head_artifact(encoder)
         except (RuntimeError, OSError) as exc:
             print(f"Semantic category head unavailable; TF-IDF fallback remains active: {exc}")
             return
     print(
         f"Semantic category head ready: {DEFAULT_SEMANTIC_ARTIFACT_PATH} "
-        f"({semantic.training_rows} training rows; metadata {DEFAULT_SEMANTIC_METADATA_PATH})"
+        f"({semantic_metadata.training_rows} training rows; "
+        f"metadata {DEFAULT_SEMANTIC_METADATA_PATH})"
     )
 
 
