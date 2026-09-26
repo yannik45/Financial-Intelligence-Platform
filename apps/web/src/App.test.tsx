@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import App from "./App";
 
 const accounts = [
@@ -48,6 +48,10 @@ const transactions = {
 const jsonResponse = (payload: unknown) =>
   Promise.resolve({ ok: true, json: () => Promise.resolve(payload) } as Response);
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 beforeEach(() => {
   window.localStorage.clear();
   vi.stubGlobal(
@@ -80,6 +84,20 @@ beforeEach(() => {
           model_version: "test-model-v1",
         });
       if (url.includes("/v1/transactions")) return jsonResponse(transactions);
+      if (url.includes("/volatility-forecast"))
+        return jsonResponse({
+          symbol: "AAPL",
+          observed_on: "2026-08-13",
+          horizon_trading_days: 20,
+          predicted_annualized_volatility: 0.237,
+          annualized: true,
+          model_version: "ewma-close-0.94-v1",
+          source: "demo",
+          retrieved_at: "2026-08-14T08:00:00Z",
+          data_status: "current",
+          training_source_feed: null,
+          feed_match: null,
+        });
       return jsonResponse([]);
     }),
   );
@@ -271,6 +289,21 @@ test("submits a portfolio order that updates the shared brokerage ledger", async
         is_stale: false,
       });
     }
+    if (url.endsWith("/v1/market/instruments/instrument-id/volatility-forecast")) {
+      return jsonResponse({
+        symbol: "WORLD-ETF",
+        observed_on: "2026-06-30",
+        horizon_trading_days: 20,
+        predicted_annualized_volatility: 0.12,
+        annualized: true,
+        model_version: "ewma-close-0.94-v1",
+        source: "demo",
+        retrieved_at: "2026-08-01T10:00:00Z",
+        data_status: "current",
+        training_source_feed: null,
+        feed_match: null,
+      });
+    }
     if (url.includes("/v1/market/instruments?")) return jsonResponse([instrument]);
     if (url.endsWith("/v1/portfolios/portfolio-id/orders") && init?.method === "POST") {
       return jsonResponse({ id: "trade-id" });
@@ -292,6 +325,7 @@ test("submits a portfolio order that updates the shared brokerage ledger", async
   expect(screen.getByText("Diversification quality")).toBeInTheDocument();
   expect(screen.getByText("Historical portfolio volatility")).toBeInTheDocument();
   fireEvent.click(await screen.findByRole("button", { name: "Buy more" }));
+  expect(await screen.findByLabelText("WORLD-ETF volatility forecast")).toBeInTheDocument();
   expect(screen.getByLabelText("Demo instrument")).toBeInTheDocument();
   expect(
     screen.getByText("All selectable instruments use deterministic synthetic prices."),

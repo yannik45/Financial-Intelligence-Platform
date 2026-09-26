@@ -5,7 +5,9 @@ flows, risk analytics, market data, and explainable ML suggestions into one
 workspace. The backend owns financial calculations and ledger state; the
 browser presents results and collects review decisions.
 
-![Portfolio dashboard with valuation, risk metrics, and allocation charts](docs/assets/portfolio-overview.png)
+![Portfolio summary, key metrics, and value history](docs/assets/portfolio-overview.png)
+
+*Portfolio overview with valuation, risk metrics, reconstructed value history, and allocation breakdowns.*
 
 ## What you can explore
 
@@ -16,10 +18,28 @@ browser presents results and collects review decisions.
 | Transaction intelligence | Explore checking, savings, and linked brokerage activity; generate a reproducible synthetic bank feed; edit classification suggestions |
 | Market data and forecasts | Use credential-free demo prices or optional Alpaca daily data; inspect source and freshness; view a clearly labeled volatility estimate |
 
-![Instrument discovery and simulated order workflow](docs/assets/trading-and-forecast.png)
-
 Orders are simulated and never reach a broker. The included sample data makes
 the application usable without market-data credentials or customer data.
+
+## Product walkthrough
+
+### Instrument research and trading
+
+![Instrument discovery, volatility forecast, and simulated order workflow](docs/assets/trading-and-forecast.png)
+
+*Instrument discovery combines current market data, volatility forecasts, and simulated orders.*
+
+### Portfolio risk analytics
+
+![Portfolio risk score, dimensions, and principal risk drivers](docs/assets/risk-analytics.png)
+
+*Deterministic risk analytics separate measured market risk, diversification, and liquidity.*
+
+### Transaction intelligence
+
+![Unified account activity and transaction classification review](docs/assets/transaction-classification.png)
+
+*Unified account activity with editable ML category suggestions and review status.*
 
 ## Run the application
 

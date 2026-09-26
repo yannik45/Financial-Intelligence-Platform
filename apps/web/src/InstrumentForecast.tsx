@@ -52,7 +52,7 @@ export default function InstrumentForecast({ instrumentId, symbol, onClose }: In
           {failure.retryable ? <button className="secondary compact" type="button" onClick={() => forecast.refetch()}>Retry</button> : null}
         </div>
       ) : null}
-      {forecast.data ? (
+      {forecast.data && typeof forecast.data.model_version === "string" ? (
         <>
           <div className="forecast-summary">
             <div>
