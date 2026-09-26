@@ -1,7 +1,8 @@
-import hashlib
 from pathlib import Path
 
 import pandas as pd
+
+from financial_ai.ml.artifact_integrity import calculate_canonical_text_sha256
 
 DEFAULT_MANUAL_SHORT_PATH = Path("data/development/transaction_categories/manual_short_v2.csv")
 EXPECTED_SPLITS = {"train", "validation", "test"}
@@ -19,7 +20,7 @@ REQUIRED_COLUMNS = {
 
 
 def calculate_manual_short_sha256(path: Path = DEFAULT_MANUAL_SHORT_PATH) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    return calculate_canonical_text_sha256(path)
 
 
 def validate_manual_short_dataset(data: pd.DataFrame) -> None:

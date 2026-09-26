@@ -105,7 +105,10 @@ def _records_for_strategy(
     strategy: str,
     review_threshold: float,
 ) -> list[PredictionRecord]:
-    classifier = TransactionClassifier(loaded_model, review_threshold=review_threshold)
+    # Freeze the v1 lexical policy even when a v2 semantic artifact is installed.
+    classifier = TransactionClassifier(
+        loaded_model, review_threshold=review_threshold, semantic_enabled=False
+    )
     records: list[PredictionRecord] = []
     for row in challenge.itertuples(index=False):
         text = " ".join(part for part in (row.description, row.counterparty) if part).strip()

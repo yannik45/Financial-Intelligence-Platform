@@ -109,7 +109,7 @@ class MarketVolatilityForecastRead(BaseModel):
     source: str
     retrieved_at: datetime
     data_status: str = Field(pattern="^(current|stale)$")
-    training_source_feed: str
+    training_source_feed: str | None
     feed_match: bool | None
 
 

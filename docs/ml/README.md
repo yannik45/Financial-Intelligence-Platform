@@ -1,45 +1,41 @@
-# ML documentation
+# Machine learning
 
-The repository contains two applied-ML tracks: a bilingual hybrid transaction
-classifier with governed feedback, and offline market-volatility forecasting
-with leakage-aware temporal evaluation. Both retain transparent references,
-versioned inputs, and explicit production-readiness limits.
+The platform combines transaction classification and volatility forecasting.
+Both workflows expose their data sources and keep evaluation separate from
+serving behavior.
 
-Each track separates `data`, `modeling`, and `evaluation` modules. Transaction
-classification additionally isolates its online `core` and offline `feedback`
-lifecycle; market-forecast serving remains in `financial_ai.market_forecast_service`.
-
-## Start here
-
-| Document | What it answers |
+| Workflow | In the application |
 |---|---|
-| [Category taxonomy](transaction_categories.md) | Which labels exist and where are their boundaries? |
-| [Classifier service](transaction_classifier_service.md) | What does the current API classifier do? |
-| [Classification v2 selection](transaction_classification_v2.md) | Why are bank and manual descriptions routed to different models? |
-| [Frozen product evaluation](text_classification_evaluation.md) | How do rules, ML, and the hybrid compare? |
-| [Feedback lifecycle](transaction_classification_feedback.md) | How are corrections exported, evaluated, and promoted safely? |
-| [Market forecast data foundation](market_forecast_data_foundation.md) | How do daily market observations become reproducible, leakage-aware datasets? |
-| [Market volatility baseline](market_volatility_baseline.md) | Do naive, statistical, and regularized linear forecasts beat simple references? |
-| [Market volatility boosting](market_volatility_boosting.md) | Does a preselected nonlinear model improve the frozen references, and where does it fail? |
+| [Transaction classification](transaction-classification.md) | Suggests editable categories for transactions and bank-feed activity |
+| [Volatility forecasting](volatility-forecasting.md) | Shows a source-labeled volatility estimate for an instrument |
 
-Aggregate market-forecast evidence is stored under
-[`data/evaluation/market_forecast`](../../data/evaluation/market_forecast/);
-full datasets and reports remain ignored runtime artifacts.
+## Results at a glance
 
-## Reproducibility records
-
-These documents preserve experiment decisions and results. They are evidence,
-not alternative product instructions.
-
-| Record | Status |
+| Evaluation | Key result |
 |---|---|
-| [Multilingual classification](multilingual_transaction_classification.md) | Frozen model-selection experiment |
-| [Controlled English training](controlled_english_training.md) | Frozen English generator and evaluation |
-| [German training v2](german_transaction_training_v2.md) | Frozen German generator used by the model |
-| [German challenge](german_transaction_challenge.md) | Frozen German-only evaluation |
-| [Original English methodology](transaction_classification.md) | Historical external-dataset baseline |
-| [German training v1](german_transaction_training.md) | Historical, superseded generator |
+| Earlier rules + TF-IDF policy, 252 English/German challenge cases | 69.8% accuracy; 60.7% automatically classified, with 96.1% accuracy among those cases |
+| Multilingual E5, 44 in-scope descriptions in the frozen manual test | 95.5% accuracy; 95.4% macro-F1 |
+| Current bank-feed service, 1,500 generated transactions | 58.6% automatically classified; all 879 accepted labels matched the generator |
+| XGBoost volatility model, 24,100 historical test forecasts | MAE 0.0690, RMSE 0.1076, QLIKE 0.3164, bias −0.0194; Ridge MAE was 0.0699 |
 
-Corresponding modules and tests remain versioned so the results can be
-reproduced. New product code should use the active artifact builder and service,
-not historical evaluation runners.
+Accuracy measures correct categories across evaluated examples. Automatic
+coverage measures how often the service assigns a category without review;
+accuracy among accepted cases measures correctness only within that subset.
+Macro-F1 averages each category's F1 score, balancing precision and recall
+while giving categories equal weight. Forecast MAE is the average absolute
+error in annualized volatility units: 0.0690 is about 6.9 percentage points.
+RMSE emphasizes larger forecast errors. QLIKE compares predicted and realized
+variance; bias is average prediction minus realization. Lower MAE, RMSE, and
+QLIKE are better, while bias closer to zero is better.
+These evaluations use different datasets and should not be compared as one
+leaderboard.
+
+The [category definitions](transaction_categories.md) explain the labels.
+The classification datasets are included and use synthetic or curated text.
+The bank simulation checks the application against its own generator, so its
+match rate is not a measure of accuracy on real bank data. The market study's
+licensed SIP prices and trained artifact are not included; its figures come
+from versioned evaluation summaries. See the [aggregate metric tables](evaluation-results.md)
+for the full comparison, the [brief experiment history](experiment-history.md)
+for earlier decisions, and the [evaluation commands](reproducibility.md) for
+the steps and underlying evidence.

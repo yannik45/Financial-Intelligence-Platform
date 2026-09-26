@@ -328,7 +328,7 @@ export type MarketVolatilityForecast = {
   source: string;
   retrieved_at: string;
   data_status: "current" | "stale";
-  training_source_feed: string;
+  training_source_feed: string | null;
   feed_match: boolean | null;
 };
 

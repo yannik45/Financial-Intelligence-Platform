@@ -52,7 +52,7 @@ export default function InstrumentForecast({ instrumentId, symbol, onClose }: In
           {failure.retryable ? <button className="secondary compact" type="button" onClick={() => forecast.refetch()}>Retry</button> : null}
         </div>
       ) : null}
-      {forecast.data ? (
+      {forecast.data && typeof forecast.data.model_version === "string" ? (
         <>
           <div className="forecast-summary">
             <div>
@@ -64,7 +64,7 @@ export default function InstrumentForecast({ instrumentId, symbol, onClose }: In
                   ),
                 )}
               </strong>
-              <span>Expected volatility over the next {forecast.data.horizon_trading_days} trading days</span>
+              <span>{forecast.data.data_status === "stale" ? `Historical ${forecast.data.horizon_trading_days}-day volatility estimate as of ${forecast.data.observed_on}` : `Expected volatility over the next ${forecast.data.horizon_trading_days} trading days`}</span>
             </div>
             <div>
               <b>{formatPercent(forecast.data.predicted_annualized_volatility)} annualized</b>
@@ -74,12 +74,14 @@ export default function InstrumentForecast({ instrumentId, symbol, onClose }: In
               {forecast.data.data_status === "stale" ? "Stale market data" : "Current market data"}
             </span>
           </div>
+          <p className="forecast-interpretation">Method: {forecast.data.model_version.startsWith("ewma-") ? "EWMA reference" : "XGBoost model"}.</p>
           <p className="forecast-interpretation">This estimates future variation, not direction, return, or probability of loss.</p>
           <details className="forecast-methodology">
             <summary>Methodology and limitations</summary>
             <p>The horizon value converts annualized volatility using the square-root-of-time convention and is not a guaranteed price range.</p>
-            <p>Model {forecast.data.model_version} · Source {forecast.data.source} · Retrieved {new Date(forecast.data.retrieved_at).toLocaleString("en-IE")}</p>
-            {forecast.data.feed_match === false ? <p>The model was trained on {forecast.data.training_source_feed.toUpperCase()} data, while this forecast uses a different provider feed. Coverage and volume may differ.</p> : null}
+            <p>Method {forecast.data.model_version} · Source {forecast.data.source} · Retrieved {new Date(forecast.data.retrieved_at).toLocaleString("en-IE")}</p>
+            {forecast.data.model_version.startsWith("ewma-") ? <p>This EWMA reference uses past daily closing prices. Demo prices are synthetic. The XGBoost evaluation results do not apply to this estimate.</p> : null}
+            {forecast.data.feed_match === false && forecast.data.training_source_feed ? <p>The model was trained on {forecast.data.training_source_feed.toUpperCase()} data, while this forecast uses a different provider feed. Coverage and volume may differ.</p> : null}
           </details>
         </>
       ) : null}
